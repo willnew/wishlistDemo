@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/util
+		http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<!-- include Service SDK libraries -->
+	<import resource="classpath:/META-INF/libraries-spring.xml"/>
+
+	<!-- include Service SDK API-Console helpers -->
+	<import resource="classpath*:/META-INF/api-console-spring.xml"/>
+
+	<!-- specify the component scan -->
+	<context:component-scan base-package="com.sample.wishlistDemo.api.generated"/>
+
+	<!-- import placeholder values from property files and environment, see default.properties -->
+	<context:property-placeholder location="classpath:/default.properties,classpath*:test.properties"/>
+
+	<!-- take annotation-based configuration into account, when instantiating beans -->
+	<context:annotation-config/>
+	
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:/default.properties"/>
+        <property name="searchSystemEnvironment" value="true"/>
+    </bean>
+        
+	<bean id="authorizedExecutionTemplate" autowire-candidate="true" class="com.sap.cloud.yaas.servicesdk.authorization.integration.AuthorizedExecutionTemplate">
+	    <constructor-arg ref="accessTokenProvider"/>
+	</bean>
+	
+	<bean id="accessTokenProvider" class="com.sap.cloud.yaas.servicesdk.authorization.cache.SimpleCachingProviderWrapper">
+	    <constructor-arg>
+	        <bean class="com.sap.cloud.yaas.servicesdk.authorization.protocol.ClientCredentialsGrantProvider">
+	            <property name="tokenEndpointUri" value="${OAUTH2_TOKEN_ENDPOINT_URL}"/>
+	            <property name="clientId" value="${CLIENT_ID}"/>
+	            <property name="clientSecret" value="${CLIENT_SECRET}"/>
+	        </bean>
+	    </constructor-arg>
+	</bean>
+	
+	<bean id="jsonClient" class="com.sample.wishlistDemo.client.ClientFactory"/>
+	
+	<bean id="documentClient" class="com.sap.cloud.yaas.api.DocumentClient">
+		<constructor-arg name="baseUri">
+			<util:constant static-field="com.sap.cloud.yaas.api.DocumentClient.DEFAULT_BASE_URI" />
+		</constructor-arg>
+		<constructor-arg name="client" ref="jsonClient" />
+	</bean>
+	
+	<import resource="classpath:/META-INF/logging-filters-spring.xml" />
+	<import resource="classpath:/META-INF/security-spring.xml" />
+
+</beans>
